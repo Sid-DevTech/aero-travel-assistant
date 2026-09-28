@@ -552,7 +552,7 @@ if plan_btn:
         # Explicitly pass the API key to Client
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-3.5-flash-lite",
+            model="gemini-2.5-flash",
             contents=prompt
         )
 
