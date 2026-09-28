@@ -1,13 +1,23 @@
+import os
+import time
+import urllib.parse
 import streamlit as st
 from google import genai
 from dotenv import load_dotenv
-import time
-import urllib.parse
 
 load_dotenv()
 
 # MUST BE THE FIRST STREAMLIT COMMAND
 st.set_page_config(page_title="Aero Travel", page_icon="✈️", layout="wide")
+
+# Safe API key retrieval from Streamlit Secrets or Environment Variables
+api_key = None
+if "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+elif "GOOGLE_API_KEY" in st.secrets:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+else:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
 
 def progress_bar_ui():
@@ -518,6 +528,8 @@ Local Transit: $W
 if plan_btn:
     if not location:
         st.warning("Please enter a destination in the sidebar.")
+    elif not api_key:
+        st.error("⚠️ Gemini API key not found. Please set `GEMINI_API_KEY` in Streamlit Secrets or your `.env` file.")
     else:
         status_box = st.empty()
         progress_bar = st.progress(0)
@@ -537,9 +549,10 @@ if plan_btn:
             time.sleep(0.05)
             progress_bar.progress(p, text=f"{p}%")
 
-        client = genai.Client()
+        # Explicitly pass the API key to Client
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash-lite",
             contents=prompt
         )
 
