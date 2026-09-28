@@ -2,42 +2,22 @@ import os
 import time
 import urllib.parse
 import streamlit as st
-import streamlit.components.v1 as components
 from google import genai
 from dotenv import load_dotenv
 
-# override=True so the key in your .env wins over any stale/wrong system env var
-load_dotenv(override=True)
+load_dotenv()
 
 # MUST BE THE FIRST STREAMLIT COMMAND
 st.set_page_config(page_title="Aero Travel", page_icon="✈️", layout="wide")
 
-
-def get_api_key():
-    """
-    Return a clean Gemini API key (from AI Studio, starts with 'AIza').
-    Checks Streamlit secrets first, then environment variables.
-    Safe when no secrets.toml exists.
-    """
-    key = None
-
-    # st.secrets raises if no secrets.toml exists, so guard it
-    try:
-        key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
-    except Exception:
-        key = None
-
-    if not key:
-        key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-
-    if key:
-        # Remove whitespace, newlines and stray quotes (common .env / secrets mistakes)
-        key = str(key).strip().strip('"').strip("'")
-
-    return key or None
-
-
-api_key = get_api_key()
+# Safe API key retrieval from Streamlit Secrets or Environment Variables
+api_key = None
+if "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+elif "GOOGLE_API_KEY" in st.secrets:
+    api_key = st.secrets["GOOGLE_API_KEY"]
+else:
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 
 
 def progress_bar_ui():
@@ -449,20 +429,6 @@ def pages_ui():
 """, unsafe_allow_html=True)
 
 
-def generate_itinerary(key, prompt_text):
-    """Call Gemini with a plain API key. Raises a readable error on auth problems."""
-    # Vertex mode would make the SDK expect OAuth/ADC credentials instead of an API key,
-    # so make sure it is off for this client.
-    os.environ.pop("GOOGLE_GENAI_USE_VERTEXAI", None)
-
-    client = genai.Client(api_key=key, vertexai=False)
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt_text,
-    )
-    return response.text
-
-
 # Initialize Session State
 if "itinerary_response" not in st.session_state:
     st.session_state.itinerary_response = None
@@ -482,7 +448,7 @@ with st.sidebar:
     sidebar_ui()
     brand_logo_name()
     st.divider()
-    st.pills("Status", ["🟢 Ready to Explore", "⚡ Gemini Powered"], selection_mode="multi")
+    st.pills("Status", ["🟢 Ready to Explore", "⚡ Gemini Powered"], selection_mode="multi")   
     location = st.text_input("Where are you planning to go?", placeholder="e.g. Paris, Spain, Tokyo")
     days_number = st.slider("Number of days to plan the trip", min_value=1, max_value=30, value=1)
     budget = st.selectbox("What's your budget?", ("Luxury", "Moderate", "Budgeted"))
@@ -564,12 +530,6 @@ if plan_btn:
         st.warning("Please enter a destination in the sidebar.")
     elif not api_key:
         st.error("⚠️ Gemini API key not found. Please set `GEMINI_API_KEY` in Streamlit Secrets or your `.env` file.")
-    elif not api_key.startswith("AIza"):
-        st.error(
-            "⚠️ The key you provided doesn't look like a Gemini API key. "
-            "It must be an API key from https://aistudio.google.com/apikey (starts with `AIza`), "
-            "not an OAuth token (`ya29...`) or a Google Cloud / Vertex credential."
-        )
     else:
         status_box = st.empty()
         progress_bar = st.progress(0)
@@ -589,30 +549,19 @@ if plan_btn:
             time.sleep(0.05)
             progress_bar.progress(p, text=f"{p}%")
 
-        try:
-            result_text = generate_itinerary(api_key, prompt)
-        except Exception as e:
-            progress_bar.empty()
-            status_box.empty()
-            msg = str(e)
-            if "401" in msg or "UNAUTHENTICATED" in msg:
-                st.error(
-                    "🔒 Authentication failed (401). Use a Gemini **API key** from "
-                    "https://aistudio.google.com/apikey — not an OAuth/access token. "
-                    "Also check your `.env`, `secrets.toml` and system env vars for an old value."
-                )
-            elif "429" in msg or "RESOURCE_EXHAUSTED" in msg:
-                st.error("⏳ Rate limit or quota reached. Please wait a moment and try again.")
-            else:
-                st.error(f"Something went wrong while generating your itinerary: {msg}")
-            st.stop()
+        # Explicitly pass the API key to Client
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite",
+            contents=prompt
+        )
 
         progress_bar.progress(100, text="100%")
         time.sleep(0.2)
         progress_bar.empty()
         status_box.empty()
 
-        st.session_state.itinerary_response = result_text
+        st.session_state.itinerary_response = response.text
         st.session_state.locations_data = location
         st.rerun()
 
@@ -630,7 +579,7 @@ if st.session_state.itinerary_response:
                 raw_locations = output_text.split("SECTION 2 - LOCATIONS:")[1].split("SECTION 3 - COSTS:")[0].strip()
                 query = urllib.parse.quote(f"{raw_locations} in {saved_location}")
                 map_url = f"https://maps.google.com/maps?q={query}&t=&z=12&ie=UTF8&iwloc=&output=embed"
-                components.iframe(map_url, height=400)
+                st.iframe(map_url, height=400)
             except IndexError:
                 st.info("Map preview unavailable for this location response.")
 
@@ -661,7 +610,7 @@ if st.session_state.itinerary_response:
             pass
 
     with st.expander("💡 Local Safety & Etiquette", expanded=False):
-        st.info("Emergency Contact: 112 | Always carry cash for local vendors.")
+        st.info("Emergency Contact: 112 | Always carry cash for local vendors.") 
 
     if "SECTION 1 - ITINERARY:" in output_text:
         try:
@@ -670,7 +619,7 @@ if st.session_state.itinerary_response:
         except IndexError:
             st.markdown(output_text)
     else:
-        st.markdown(output_text)
+        st.markdown(output_text)   
 
     st.text("How much did you like Aero?")
     feedback = st.feedback("faces")
@@ -687,6 +636,16 @@ if st.session_state.itinerary_response:
         user_msg = responses.get(feedback, "Thanks for exploring with Aero! Safe travels!")
 
         st.markdown(f"""
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+        <script>
+            confetti({{
+                particleCount: 80,
+                spread: 70,
+                origin: {{ y: 0.8 }},
+                colors: ['#00C6FF', '#0072FF', '#FFFFFF', '#38BDF8']
+            }});
+        </script>
+
         <style>
         @keyframes slideUpGlow {{
             0% {{
