@@ -694,3 +694,5 @@ if st.session_state.itinerary_response:
             <span style="font-size: 1.2rem;">✨</span>
         </div>
     """, unsafe_allow_html=True)
+
+
