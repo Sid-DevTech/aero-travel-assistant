@@ -1,5 +1,5 @@
 import streamlit as st
-from google import genai
+from google import gemini
 from dotenv import load_dotenv
 import time
 import urllib.parse
@@ -625,7 +625,6 @@ with col1:
 st.divider()
     
 
-    
 
 prompt = f"""
 You are an expert, date-conscious travel planner. Plan a detailed {days_number}-day trip to {location} for {trip_plan}.
