@@ -233,7 +233,31 @@ def progress_bar_ui():
 
     """, unsafe_allow_html=True)
 
-    
+def pages_ui():
+    st.markdown("""
+    <style>
+    /* Style st.page_link and st.download_button globally */
+    div[data-testid="stPageLink"] a,
+    div[data-testid="stDownloadButton"] > button {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%) !important;
+        border: 1px solid rgba(0, 198, 255, 0.35) !important;
+        color: #FFFFFF !important;
+        border-radius: 12px !important;
+        padding: 10px 18px !important;
+        transition: all 0.3s ease-in-out !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    /* Hover effect with Cyan glow */
+    div[data-testid="stPageLink"] a:hover,
+    div[data-testid="stDownloadButton"] > button:hover {
+        border-color: #00C6FF !important;
+        box-shadow: 0 0 15px rgba(0, 198, 255, 0.4) !important;
+        transform: translateY(-2px);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 def ai_output():
     for word in output_text.split(" "):
         yield word + " "
