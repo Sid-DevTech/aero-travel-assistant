@@ -751,5 +751,47 @@ if st.session_state.itinerary_response:
             4: "Woohoo! Thanks for loving Aero! Safe travels on your upcoming adventure!"
         }
         user_msg = responses.get(feedback, "Thanks for exploring with Aero! Safe travels!")
+st.markdown("""
+    <script>
+    (function() {
+        const parentDoc = window.parent.document;
+        let spotlight = parentDoc.getElementById('aero-cursor-spotlight');
 
-        feedback_message()
+        // 1. Create global spotlight layer in main document if it doesn't exist
+        if (!spotlight) {
+            spotlight = parentDoc.createElement('div');
+            spotlight.id = 'aero-cursor-spotlight';
+            spotlight.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                pointer-events: none;
+                z-index: 9999;
+                mix-blend-mode: screen;
+                transition: background 0.015s linear;
+            `;
+            parentDoc.body.appendChild(spotlight);
+        }
+
+        // 2. Radius configuration (In pixels)
+        const radius = 250; // Change this value to make the glow circle larger or smaller
+
+        // 3. Track mouse movement across the entire main screen
+        parentDoc.addEventListener('mousemove', function(e) {
+            spotlight.style.background = `radial-gradient(
+                ${radius}px circle at ${e.clientX}px ${e.clientY}px, 
+                rgba(0, 198, 255, 0.22) 0%, 
+                rgba(0, 114, 255, 0.08) 55%, 
+                transparent 100%
+            )`;
+        });
+
+        // Hide glow when cursor leaves browser window
+        parentDoc.addEventListener('mouseleave', function() {
+            spotlight.style.background = 'transparent';
+        });
+    })();
+    </script>
+""", unsafe_allow_html=True)
