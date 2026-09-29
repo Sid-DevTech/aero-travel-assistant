@@ -705,7 +705,7 @@ if st.session_state.itinerary_response:
             4: "Woohoo! Thanks for loving Aero! Safe travels on your upcoming adventure!"
         }
         user_msg = responses.get(feedback, "Thanks for exploring with Aero! Safe travels!")
-st.markdown(f"""
+        st.markdown(f"""
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
         confetti({{
