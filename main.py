@@ -751,47 +751,62 @@ if st.session_state.itinerary_response:
             4: "Woohoo! Thanks for loving Aero! Safe travels on your upcoming adventure!"
         }
         user_msg = responses.get(feedback, "Thanks for exploring with Aero! Safe travels!")
-st.markdown("""
+st.markdown(f"""
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
-    (function() {
-        const parentDoc = window.parent.document;
-        let spotlight = parentDoc.getElementById('aero-cursor-spotlight');
-
-        // 1. Create global spotlight layer in main document if it doesn't exist
-        if (!spotlight) {
-            spotlight = parentDoc.createElement('div');
-            spotlight.id = 'aero-cursor-spotlight';
-            spotlight.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                pointer-events: none;
-                z-index: 9999;
-                mix-blend-mode: screen;
-                transition: background 0.015s linear;
-            `;
-            parentDoc.body.appendChild(spotlight);
-        }
-
-        // 2. Radius configuration (In pixels)
-        const radius = 250; // Change this value to make the glow circle larger or smaller
-
-        // 3. Track mouse movement across the entire main screen
-        parentDoc.addEventListener('mousemove', function(e) {
-            spotlight.style.background = `radial-gradient(
-                ${radius}px circle at ${e.clientX}px ${e.clientY}px, 
-                rgba(0, 198, 255, 0.22) 0%, 
-                rgba(0, 114, 255, 0.08) 55%, 
-                transparent 100%
-            )`;
-        });
-
-        // Hide glow when cursor leaves browser window
-        parentDoc.addEventListener('mouseleave', function() {
-            spotlight.style.background = 'transparent';
-        });
-    })();
+        confetti({{
+            particleCount: 80,
+            spread: 70,
+            origin: {{ y: 0.8 }},
+            colors: ['#00C6FF', '#0072FF', '#FFFFFF', '#38BDF8']
+        }});
     </script>
+
+    <style>
+    @keyframes slideUpGlow {{
+        0% {{
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            box-shadow: 0 0 0 rgba(0, 198, 255, 0);
+        }}
+        50% {{
+            box-shadow: 0 8px 30px rgba(0, 198, 255, 0.4);
+        }}
+        100% {{
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            box-shadow: 0 4px 20px rgba(0, 198, 255, 0.2);
+        }}
+    }}
+
+    .animated-feedback-box {{
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(0, 114, 255, 0.15) 100%);
+        border: 1px solid rgba(0, 198, 255, 0.4);
+        border-radius: 14px;
+        padding: 18px 26px;
+        text-align: center;
+        margin-top: 15px;
+        backdrop-filter: blur(10px);
+        animation: slideUpGlow 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }}
+
+    .animated-feedback-text {{
+        font-size: 1.1rem;
+        font-weight: 600;
+        background: linear-gradient(90deg, #00C6FF, #E0F7FA, #0072FF);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
+        letter-spacing: 0.2px;
+    }}
+    </style>
+
+    <div class="animated-feedback-box">
+        <span style="font-size: 1.2rem;">✨</span>
+        <span class="animated-feedback-text">
+            {user_msg}
+        </span>
+        <span style="font-size: 1.2rem;">✨</span>
+    </div>
 """, unsafe_allow_html=True)
